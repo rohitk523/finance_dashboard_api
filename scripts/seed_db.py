@@ -29,7 +29,7 @@ def seed_database():
         # Create user
         user = User(
             email="user@example.com",
-            password_hash=get_password_hash("password123"),
+            password_hash=get_password_hash("password@123"),
             full_name="Test User",
             phone="9876543210",
             pan_number="ABCDE1234F",
@@ -75,16 +75,19 @@ def seed_database():
         print(f"Created {len(categories)} transaction categories")
         
         # Create bank accounts
-        accounts = [
+        accounts_data = [
             {"user_id": user.id, "account_name": "Primary Savings", "bank_name": "HDFC Bank", "account_number": "1234567890", "ifsc_code": "HDFC0001234", "account_type": "savings", "balance": 50000},
             {"user_id": user.id, "account_name": "Salary Account", "bank_name": "ICICI Bank", "account_number": "9876543210", "ifsc_code": "ICIC0005678", "account_type": "savings", "balance": 75000}
         ]
         
-        for account_data in accounts:
+        bank_accounts = []
+        for account_data in accounts_data:
             account = BankAccount(**account_data)
             db.add(account)
+            db.flush()  # Flush to get the ID without committing
+            bank_accounts.append(account)
         db.commit()
-        print(f"Created {len(accounts)} bank accounts")
+        print(f"Created {len(accounts_data)} bank accounts")
         
         # Get all categories for reference
         all_categories = db.query(TransactionCategory).all()
@@ -105,7 +108,7 @@ def seed_database():
                 "category_id": category_dict["Salary"].id,
                 "transaction_type": "credit",
                 "payment_method": "bank_transfer",
-                "bank_account_id": accounts[1]["account_number"]
+                "bank_account_id": bank_accounts[1].id  # Use the actual ID, not account_number
             })
         
         # Expense transactions
@@ -121,7 +124,7 @@ def seed_database():
                 "category_id": category_dict["Rent"].id,
                 "transaction_type": "debit",
                 "payment_method": "bank_transfer",
-                "bank_account_id": accounts[0]["account_number"]
+                "bank_account_id": bank_accounts[0].id  # Use the actual ID, not account_number
             })
             
             # Random daily expenses for this month
@@ -152,7 +155,7 @@ def seed_database():
                     "category_id": category_dict[category_name].id,
                     "transaction_type": "debit",
                     "payment_method": random.choice(["upi", "card", "cash", "bank_transfer"]),
-                    "bank_account_id": random.choice([acc["account_number"] for acc in accounts])
+                    "bank_account_id": random.choice([acc.id for acc in bank_accounts])  # Use the actual IDs, not account_numbers
                 })
         
         # Add tax-deductible medical expenses
@@ -166,7 +169,7 @@ def seed_database():
                 "category_id": category_dict["Medical"].id,
                 "transaction_type": "debit",
                 "payment_method": "card",
-                "bank_account_id": accounts[0]["account_number"],
+                "bank_account_id": bank_accounts[0].id,  # Use the actual ID, not account_number
                 "is_tax_deductible": True,
                 "tax_section": "80D"
             })
@@ -257,6 +260,5 @@ def seed_database():
         db.close()
 
 if __name__ == "__main__":
-    # Create all tables
     Base.metadata.create_all(bind=engine)
     seed_database()
