@@ -12,8 +12,7 @@ class Settings(BaseSettings):
     
     # Database settings
     DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", 
-        "postgresql://postgres:postgres@localhost:5432/finance_dashboard"
+        "DATABASE_URL",
     )
     
     # File storage settings
@@ -29,6 +28,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 settings = Settings()
 
